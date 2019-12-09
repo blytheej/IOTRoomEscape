@@ -4,11 +4,11 @@
 #include "SoftwareSerial.h"
 SoftwareSerial Serial1(18, 19); // RX, TX
 #endif
-
+#define touchPin 20
 char ssid[] = "teeemo";            // your network SSID (name)
 char pass[] = "teemoku00";        // your network password
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
-int reqCount = 0;                // number of requests received
+int touchVal;
 
 WiFiEspServer server(80);
 
@@ -21,6 +21,9 @@ void setup()
   Serial1.begin(115200);
   // initialize ESP module
   WiFi.init(&Serial1);
+  pinMode(touchPin, INPUT);
+  //interrupt Pin 2, 3, 18, 19, 20, 21
+  attachInterrupt(digitalPinToInterrupt(touchPin), touched1, FALLING);
 
   // check for the presence of the shield
   if (WiFi.status() == WL_NO_SHIELD) {
@@ -85,7 +88,7 @@ void loop()
       }
     }
     // give the web browser time to receive the data
-    delay(10);
+    delay(1000);
 
     // close the connection:
     client.stop();
@@ -110,4 +113,8 @@ void printWifiStatus()
   Serial.print("To see this page in action, open a browser to http://");
   Serial.println(ip);
   Serial.println();
+}
+
+void touched1(){
+  Serial.print("touched1");
 }
