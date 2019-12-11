@@ -42,7 +42,15 @@ char answer[11] = "..----.-..";       // answer for Morse - IOTRE
 char touching[11];                   // touching status
 int ans_len = 10;
 int touchedTime = 0;                 // touched time to check answer
-//STEP 4 - QUIZ 3. LED
+//STEP 4 - QUIZ 3. Memory Game
+int button_cont[3] = {2, 3, 18};  // Blue Yellow Red buttons
+int pin_LED[3] = {44, 45, 46};     // for Blue Yellow Red LED
+int butwait = 500;  //버튼이 눌러지기 전까지 대기하는 시간
+int ledtime =500;   //led 점등 시간
+int right = 0; //wheter answer is correct or not
+int pressedNum = 0;
+char answer[5] = { 'B' , 'Y', 'R', 'B', 'Y'};
+char playerAnswer[5];
 
 //STEP 5 - ESCAPED
 
@@ -84,10 +92,14 @@ void setup() {
    pinMode(touchPinL, INPUT);
    pinMode(touchPinS, INPUT);
    //touch sensor interrupt
-  // attachInterrupt(digitalPinToInterrupt(touchPinL), touchedL, FALLING);
-  // attachInterrupt(digitalPinToInterrupt(touchPinS), touchedS, FALLING);
+   attachInterrupt(digitalPinToInterrupt(touchPinL), touchedL, FALLING);
+   attachInterrupt(digitalPinToInterrupt(touchPinS), touchedS, FALLING);
+    //버튼이 눌리면 인터럽트 발생!
+  attachInterrupt(digitalPinToInterrupt(button_cont[0]),pressedBlue, FALLING);
+  attachInterrupt(digitalPinToInterrupt(button_cont[1]),pressedYellow, FALLING);
+  attachInterrupt(digitalPinToInterrupt(button_cont[2]),pressedRed, FALLING);
 
-  //STEP 4 - QUIZ 3. LED
+  //STEP 4 - QUIZ 3. Memory Game
    
 }
 
@@ -101,49 +113,51 @@ void loop() {
   if(step == 1){ // STEP 1. start setting
     //wifi
     // listen for incoming clients
-    WiFiEspClient client = server.available();
-    if (client) {
-      Serial.println("New client");
-      // an http request ends with a blank line
-      boolean currentLineIsBlank = true;
-      while (client.connected()) {
-        if (client.available()) {
-          char c = client.read();
-          Serial.write(c);
-          // if you've gotten to the end of the line (received a newline
-          // character) and the line is blank, the http request has ended,
-          // so you can send a reply
-          if (c == '\n' && currentLineIsBlank) {
-            Serial.println("Sending response");
-            
-            // send a standard http response header
-            // use \r\n instead of many println statements to speedup data send
-            client.print(
-              "HTTP/1.1 200 OK\r\n"
-              "Content-Type: text/html\r\n"
-              "Connection: close\r\n"  // the connection will be closed after completion of the response
-              "Refresh: 20\r\n"        // refresh the page automatically every 20 sec
-              "\r\n");
-            client.print(" <!DOCTYPE html><head><meta charset=\"utf-8\"></head><body style=\"text-align:center;background: black;color:white; font-size:60px;padding:300px 0;\"> <div style=\"font-weight: bold;\"><div> 문이 닫힙니다</div><div style=\"color:red\">      문제를 풀고 방을 탈출하세요.    </div>    <div >       주어진 시간 10분    </div>  </div> </body></html>");
-            break;
-          }
-          if (c == '\n') {
-            // you're starting a new line
-            currentLineIsBlank = true;
-          }
-          else if (c != '\r') {
-            // you've gotten a character on the current line
-            currentLineIsBlank = false;
-          }
+  WiFiEspClient client = server.available();
+  if (client) {
+    Serial.println("New client");
+    // an http request ends with a blank line
+    boolean currentLineIsBlank = true;
+    while (client.connected()) {
+      if (client.available()) {
+        char c = client.read();
+        Serial.write(c);
+        // if you've gotten to the end of the line (received a newline
+        // character) and the line is blank, the http request has ended,
+        // so you can send a reply
+        if (c == '\n' && currentLineIsBlank) {
+          Serial.println("Sending response");
+          
+          // send a standard http response header
+          // use \r\n instead of many println statements to speedup data send
+          client.print(
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/html\r\n"
+            "Connection: close\r\n"  // the connection will be closed after completion of the response
+            "Refresh: 20\r\n"        // refresh the page automatically every 20 sec
+            "\r\n");
+          client.print(" <!DOCTYPE html><head><meta charset=\"utf-8\"></head><body style=\"text-align:center;background: black;color:white; font-size:60px;padding:300px 0;\"> <div style=\"font-weight: bold;\"><div> 문이 닫힙니다</div><div style=\"color:red\">      문제를 풀고 방을 탈출하세요.    </div>    <div >       주어진 시간 10분    </div>  </div> </body></html>");
+          break;
+        }
+        if (c == '\n') {
+          // you're starting a new line
+          currentLineIsBlank = true;
+        }
+        else if (c != '\r') {
+          // you've gotten a character on the current line
+          currentLineIsBlank = false;
         }
       }
-      // give the web browser time to receive the data
-      delay(1000);
+    }
+    // give the web browser time to receive the data
+    delay(1000);
 
-      // close the connection:
-      client.stop();
-      Serial.println("Client disconnected");
-      }
+    // close the connection:
+    client.stop();
+    Serial.println("Client disconnected");
+  }
+    
+    
   }
   else if(step == 2){// STEP 2 
     //get rfid tag read
@@ -160,9 +174,24 @@ void loop() {
     }
   }
   else if(step == 4){// STEP 4
-    
+    if(pressedNum==0){
+    lcd.setCursor(0,0);
+    lcd.print("now press the");
+    lcd.setCursor(0,1);
+    lcd.print("button orderly");
+  }
+  else if(pressedNum <5){ //버튼 입력이 완료되면
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("entering...");
+  }
+  else if(pressedNum ==5){
+    lcd.setCursor(0,0);
+    lcd.print("checking...");
+    checkAnswer();
+  }
   }else if(step == 5){// STEP 5
-    //escaped
+    
   }else{
     
   }
@@ -237,9 +266,81 @@ void checkMorse(){ // check the answer
 void init_step4(){
    Serial.print("STEP 4");
    digitalWrite(quiz2Led, HIGH);//lit led 1
-  
-}
 
+  lcd.setCursor(0,0); //Start at character 3 on line 0
+  lcd.print("Question2"); 
+  lcd.setCursor(0,1); 
+  lcd.print("Memory game"); 
+  delay(3000);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("see the lights");
+  lcd.setCursor(0,1);
+  lcd.print("and remember");
+  demonstrate();
+  lcd.clear();
+   
+}
+int demonstrate(){   //문제 출제. answer에 따라 led 깜빡이기
+  int i;
+  for(i=0; i<5; i++) {
+    if(answer[i] == 'B'){
+      digitalWrite(pin_LED[0], HIGH);
+      delay(1000);
+      digitalWrite(pin_LED[0], LOW);
+      delay(1000);
+    }else if(answer[i] == 'Y'){
+      digitalWrite(pin_LED[1], HIGH);
+      delay(1000);
+      digitalWrite(pin_LED[1], LOW);
+      delay(1000);
+    }else{
+      digitalWrite(pin_LED[2], HIGH);
+      delay(1000);
+      digitalWrite(pin_LED[2], LOW);
+      delay(1000);
+    }
+    delay(500);
+  }
+}
+//Interrupt 발생
+void pressedBlue(){
+  playerAnswer[pressedNum] = 'B';
+  Serial.print("blue button is pressed");
+  Serial.print(playerAnswer);
+  //digitalWrite(pin_LED[0],HIGH);
+  pressedNum++;
+}
+void pressedYellow(){
+  playerAnswer[pressedNum] = 'Y';
+  Serial.print("yellow button is pressed");
+  Serial.print(playerAnswer);
+  //digitalWrite(pin_LED[1],HIGH);
+  pressedNum++;
+}
+void pressedRed(){
+  playerAnswer[pressedNum] = 'R';
+  Serial.print("red button is pressed");
+  Serial.print(playerAnswer);
+  //digitalWrite(pin_LED[2],HIGH);
+  pressedNum++;
+}
+void checkAnswer(){
+  int i;
+  int wrong = 0;
+  for(i=0; i<5; i++){
+    if(answer[i] != playerAnswer[i]){
+      wrong =1;
+    }
+  }
+  if(wrong==1){
+    lcd.setCursor(0,1);
+    lcd.print("FAILED");
+  }else {
+    lcd.setCursor(0,1);
+    lcd.print("NEXT STAGE");
+  }
+}
 /***************** STEP 5 ***********************/
 void init_step5(){
    Serial.print("STEP 2");
