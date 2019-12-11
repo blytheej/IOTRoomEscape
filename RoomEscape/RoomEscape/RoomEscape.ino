@@ -38,18 +38,19 @@ WiFiEspServer server(80);
 int touchValL; // for long note
 int touchValS; // for short note
 LiquidCrystal_I2C lcd(0x27, 16,2);  // I2C LCD 객체 선언 - pin 20 21
-char answer[11] = "..----.-..";       // answer for Morse - IOTRE
+char answer1[11] = "..----.-..";       // answer for Morse - IOTRE
 char touching[11];                   // touching status
 int ans_len = 10;
 int touchedTime = 0;                 // touched time to check answer
+
 //STEP 4 - QUIZ 3. Memory Game
 int button_cont[3] = {2, 3, 18};  // Blue Yellow Red buttons
 int pin_LED[3] = {44, 45, 46};     // for Blue Yellow Red LED
 int butwait = 500;  //버튼이 눌러지기 전까지 대기하는 시간
 int ledtime =500;   //led 점등 시간
-int right = 0; //wheter answer is correct or not
+int right = 0; //whether answer is correct or not
 int pressedNum = 0;
-char answer[5] = { 'B' , 'Y', 'R', 'B', 'Y'};
+char answer2[5] = { 'B' , 'Y', 'R', 'B', 'Y'};
 char playerAnswer[5];
 
 //STEP 5 - ESCAPED
@@ -136,7 +137,7 @@ void loop() {
             "Connection: close\r\n"  // the connection will be closed after completion of the response
             "Refresh: 20\r\n"        // refresh the page automatically every 20 sec
             "\r\n");
-          client.print(" <!DOCTYPE html><head><meta charset=\"utf-8\"></head><body style=\"text-align:center;background: black;color:white; font-size:60px;padding:300px 0;\"> <div style=\"font-weight: bold;\"><div> 문이 닫힙니다</div><div style=\"color:red\">      문제를 풀고 방을 탈출하세요.    </div>    <div >       주어진 시간 10분    </div>  </div> </body></html>");
+          client.print("<!DOCTYPE html><head><meta charset=\"utf-8\"></head><body style=\"text-align:center;background: black;color:white; font-size:60px;padding:300px 0;\"> <div style=\"font-weight: bold;\"><div> 문이 닫힙니다</div><div style=\"color:red\">      문제를 풀고 방을 탈출하세요.    </div>    <div >       주어진 시간 10분    </div>  </div> </body></html>");
           break;
         }
         if (c == '\n') {
@@ -174,21 +175,23 @@ void loop() {
     }
   }
   else if(step == 4){// STEP 4
-    if(pressedNum==0){
+    if(pressedNum == 0){
     lcd.setCursor(0,0);
     lcd.print("now press the");
     lcd.setCursor(0,1);
     lcd.print("button orderly");
   }
-  else if(pressedNum <5){ //버튼 입력이 완료되면
-    lcd.clear();
+  else if(pressedNum < 5){ //버튼 입력이 완료되면
     lcd.setCursor(0,0);
     lcd.print("entering...");
+    lcd.setCursor(0,1);
+    lcd.print(playerAnswer);
   }
-  else if(pressedNum ==5){
+  else if(pressedNum == 5){
     lcd.setCursor(0,0);
     lcd.print("checking...");
     checkAnswer();
+    pressedNum  = 0;
   }
   }else if(step == 5){// STEP 5
     
@@ -247,7 +250,7 @@ void touchedS(){
 void checkMorse(){ // check the answer
   int diff = 0;
     for(int i=0;i<ans_len;i++){
-      if(answer[i] != touching[i]){diff = 1;break;}
+      if(answer1[i] != touching[i]){diff = 1;break;}
     }
     if(diff==1){
       lcd.setCursor(0,1);
@@ -306,36 +309,37 @@ int demonstrate(){   //문제 출제. answer에 따라 led 깜빡이기
 //Interrupt 발생
 void pressedBlue(){
   playerAnswer[pressedNum] = 'B';
-  Serial.print("blue button is pressed");
-  Serial.print(playerAnswer);
+  Serial.println("blue button is pressed");
+  Serial.println(playerAnswer);
   //digitalWrite(pin_LED[0],HIGH);
   pressedNum++;
 }
 void pressedYellow(){
   playerAnswer[pressedNum] = 'Y';
-  Serial.print("yellow button is pressed");
-  Serial.print(playerAnswer);
+  Serial.println("yellow button is pressed");
+  Serial.println(playerAnswer);
   //digitalWrite(pin_LED[1],HIGH);
   pressedNum++;
 }
 void pressedRed(){
   playerAnswer[pressedNum] = 'R';
-  Serial.print("red button is pressed");
-  Serial.print(playerAnswer);
+  Serial.println("red button is pressed");
+  Serial.println(playerAnswer);
   //digitalWrite(pin_LED[2],HIGH);
   pressedNum++;
 }
 void checkAnswer(){
-  int i;
   int wrong = 0;
-  for(i=0; i<5; i++){
-    if(answer[i] != playerAnswer[i]){
-      wrong =1;
+  for(int i=0; i<5; i++){
+    if(answer2[i] != playerAnswer[i]){
+      wrong = 1;break;
     }
   }
-  if(wrong==1){
+  if(wrong == 1){
     lcd.setCursor(0,1);
     lcd.print("FAILED");
+    failed();
+    demonstrate();
   }else {
     lcd.setCursor(0,1);
     lcd.print("NEXT STAGE");
