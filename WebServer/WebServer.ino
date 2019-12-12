@@ -2,11 +2,11 @@
 
 #ifndef HAVE_HWSERIAL1
 #include "SoftwareSerial.h"
-SoftwareSerial Serial1(18, 19); // RX, TX
+SoftwareSerial Serial1(18,19); // RX, TX
 #endif
 #define touchPin 20
-char ssid[] = "teeemo";            // your network SSID (name)
-char pass[] = "teemoku00";        // your network password
+char ssid[] = "Te";            // your network SSID (name)
+char pass[] = "25672567";        // your network password
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 int touchVal;
 

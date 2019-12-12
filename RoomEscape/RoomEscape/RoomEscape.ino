@@ -5,8 +5,8 @@
 //#include <MFRC522.h>
 
 //GAME SETTING - STEP 0
-#define wifiRX 15
-#define wifiTX 14
+#define wifiRX 14
+#define wifiTX 15
 #ifndef HAVE_HWSERIAL1
 #include "SoftwareSerial.h"
 SoftwareSerial Serial3(wifiRX, wifiTX);
@@ -18,12 +18,11 @@ SoftwareSerial Serial3(wifiRX, wifiTX);
 #define quiz2Led 42
 #define quiz3Led 43 // LED for quiz
 
-int step = 0; // for step of game
-char ssid[] = "teeemo";            // WIFI SSID
-char pass[] = "teemoku00";        // WIFI PASSWORD
+int step = 4; // for step of game
+char ssid[] = "Te";            // WIFI SSID
+char pass[] = "25672567";        // WIFI PASSWORD
 int status = WL_IDLE_STATUS; 
 WiFiEspServer server(80);
-
 //STEP 1 - START
 #define RST_PIN         5           
 #define SS_PIN          53         
@@ -61,18 +60,17 @@ void setup() {
   //STEP 0
   Serial.begin(115200);
   Serial3.begin(115200);
-  WiFi.init(&Serial3);
+  //WiFi.init(&Serial3);
   pinMode(buzzer, OUTPUT);  
   pinMode(start_btn, INPUT);
   pinMode(quiz1Led, OUTPUT);
   pinMode(quiz2Led, OUTPUT);
   pinMode(quiz3Led, OUTPUT); 
   
- 
+ /*
   if (WiFi.status() == WL_NO_SHIELD) {  // check for the presence of the shield
     Serial.println("WiFi shield not present");
     // don't continue
-    while (true);
   }
   while ( status != WL_CONNECTED) {  // attempt to connect to WiFi network
     Serial.print("Attempting to connect to WPA SSID: ");
@@ -81,8 +79,9 @@ void setup() {
     status = WiFi.begin(ssid, pass);
   }
   Serial.println("You're connected to the network");
+    printWifiStatus();
   server.begin();// start the web server on port 80
-  
+  */
   
   //STEP 1 - START
   pinMode(elecMagnet, OUTPUT);
@@ -93,21 +92,25 @@ void setup() {
    pinMode(touchPinL, INPUT);
    pinMode(touchPinS, INPUT);
    //touch sensor interrupt
-   attachInterrupt(digitalPinToInterrupt(touchPinL), touchedL, FALLING);
-   attachInterrupt(digitalPinToInterrupt(touchPinS), touchedS, FALLING);
-    //버튼이 눌리면 인터럽트 발생!
+   //attachInterrupt(digitalPinToInterrupt(touchPinL), touchedL, FALLING);
+   //attachInterrupt(digitalPinToInterrupt(touchPinS), touchedS, FALLING);
+   
+
+  //STEP 4 - QUIZ 3. Memory Game
+  init_step4();
+  //버튼이 눌리면 인터럽트 발생!
+  pinMode(button_cont[0], INPUT);
+  pinMode(button_cont[1], INPUT);
+  pinMode(button_cont[2], INPUT);
   attachInterrupt(digitalPinToInterrupt(button_cont[0]),pressedBlue, FALLING);
   attachInterrupt(digitalPinToInterrupt(button_cont[1]),pressedYellow, FALLING);
   attachInterrupt(digitalPinToInterrupt(button_cont[2]),pressedRed, FALLING);
-
-  //STEP 4 - QUIZ 3. Memory Game
-   
 }
 
 void loop() {
   if(step == 0){
     int start = digitalRead(start_btn);
-    if(start == 1){
+    if(start == 0){
       init_step1(); // start step 1;
     }    
   }
@@ -176,23 +179,23 @@ void loop() {
   }
   else if(step == 4){// STEP 4
     if(pressedNum == 0){
-    lcd.setCursor(0,0);
-    lcd.print("now press the");
-    lcd.setCursor(0,1);
-    lcd.print("button orderly");
-  }
-  else if(pressedNum < 5){ //버튼 입력이 완료되면
-    lcd.setCursor(0,0);
-    lcd.print("entering...");
-    lcd.setCursor(0,1);
-    lcd.print(playerAnswer);
-  }
-  else if(pressedNum == 5){
-    lcd.setCursor(0,0);
-    lcd.print("checking...");
-    checkAnswer();
-    pressedNum  = 0;
-  }
+      lcd.setCursor(0,0);
+      lcd.print("now press the");
+      lcd.setCursor(0,1);
+      lcd.print("button orderly");
+    }
+    else if(pressedNum < 5){ //버튼 입력이 완료되면
+      lcd.setCursor(0,0);
+      lcd.print("entering...");
+      lcd.setCursor(0,1);
+      lcd.print(playerAnswer);
+    }
+    else if(pressedNum >= 5){
+      lcd.setCursor(0,0);
+      lcd.print("checking...");
+      checkAnswer();
+      pressedNum  = 0;
+    }
   }else if(step == 5){// STEP 5
     
   }else{
@@ -207,11 +210,29 @@ void failed(){ //alert BUZZER, if available, time decrease
   digitalWrite(buzzer, LOW);
   
 }
+void printWifiStatus()
+{
+  // print the SSID of the network you're attached to
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your WiFi shield's IP address
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+  
+  // print where to go in the browser
+  Serial.println();
+  Serial.print("To see this page in action, open a browser to http://");
+  Serial.println(ip);
+  Serial.println();
+}
 /***************** STEP 1 ***********************/
 
 void init_step1(){
-  Serial.print("STEP 1");
+  Serial.println("\nSTEP 1");
   digitalWrite(elecMagnet, HIGH);
+  step=1;
   //timer start
   
   
@@ -219,13 +240,14 @@ void init_step1(){
 /***************** STEP 2 ***********************/
 
 void init_step2(){
-  Serial.print("STEP 2");
+  Serial.println("\nSTEP 2");
+  step=2;
   
 }
 /***************** STEP 3 ***********************/
 
 void init_step3(){ // INITIALIZE STEP 3
-  Serial.print("STEP 3");
+  Serial.println("\nSTEP 3");
   digitalWrite(quiz1Led, HIGH);//lit led 1
   lcd.init();    
   // Print a message to the LCD.
@@ -250,11 +272,13 @@ void touchedS(){
 void checkMorse(){ // check the answer
   int diff = 0;
     for(int i=0;i<ans_len;i++){
-      if(answer1[i] != touching[i]){diff = 1;break;}
+      if(answer1[i] != touching[i]){diff = 1;}
+      touching[i] = ' ';
     }
     if(diff==1){
       lcd.setCursor(0,1);
       lcd.print("FAILED");
+      Serial.println("\nFAILED"); 
       failed();
     }
     else{
@@ -262,14 +286,20 @@ void checkMorse(){ // check the answer
       lcd.print("ANS : IOTRE");
       lcd.setCursor(0,1);
       lcd.print("NEXT STAGE"); 
+      Serial.println("\nANS : IOTRE");
+      Serial.println("NEXT STAGE");
       init_step4(); // go to next step -> 4
     }
 }
 /***************** STEP 4 ***********************/
 void init_step4(){
-   Serial.print("STEP 4");
+   Serial.println("\nSTEP 4");
+   step=4;
    digitalWrite(quiz2Led, HIGH);//lit led 1
-
+   //////////
+   lcd.init();    
+   lcd.backlight();
+   ///////////////////
   lcd.setCursor(0,0); //Start at character 3 on line 0
   lcd.print("Question2"); 
   lcd.setCursor(0,1); 
@@ -287,12 +317,12 @@ void init_step4(){
 int demonstrate(){   //문제 출제. answer에 따라 led 깜빡이기
   int i;
   for(i=0; i<5; i++) {
-    if(answer[i] == 'B'){
+    if(answer2[i] == 'B'){
       digitalWrite(pin_LED[0], HIGH);
       delay(1000);
       digitalWrite(pin_LED[0], LOW);
       delay(1000);
-    }else if(answer[i] == 'Y'){
+    }else if(answer2[i] == 'Y'){
       digitalWrite(pin_LED[1], HIGH);
       delay(1000);
       digitalWrite(pin_LED[1], LOW);
@@ -332,8 +362,9 @@ void checkAnswer(){
   int wrong = 0;
   for(int i=0; i<5; i++){
     if(answer2[i] != playerAnswer[i]){
-      wrong = 1;break;
+      wrong = 1;
     }
+    playerAnswer[i] = ' ';
   }
   if(wrong == 1){
     lcd.setCursor(0,1);
@@ -347,7 +378,7 @@ void checkAnswer(){
 }
 /***************** STEP 5 ***********************/
 void init_step5(){
-   Serial.print("STEP 2");
+   Serial.println("\nSTEP 5");
    digitalWrite(quiz3Led, HIGH);//lit led 1
    digitalWrite(elecMagnet, LOW); // turn of magnet
    //타이머 멈춤 

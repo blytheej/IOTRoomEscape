@@ -1,7 +1,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
-int button_cont[3] = {18, 3, 2};  // Blue Yellow Red buttons
-int pin_LED[3] = {8, 9, 10};     // for Blue Yellow Red LED
+int button_cont[3] = {2,3,18};  // Blue Yellow Red buttons
+int pin_LED[3] = {44,45,46};     // for Blue Yellow Red LED
 
 LiquidCrystal_I2C lcd(0x27, 16,2);  // I2C LCD 
 
