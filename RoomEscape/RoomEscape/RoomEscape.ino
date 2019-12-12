@@ -338,26 +338,49 @@ int demonstrate(){   //문제 출제. answer에 따라 led 깜빡이기
 }
 //Interrupt 발생
 void pressedBlue(){
-  playerAnswer[pressedNum] = 'B';
-  Serial.println("blue button is pressed");
-  Serial.println(playerAnswer);
-  //digitalWrite(pin_LED[0],HIGH);
-  pressedNum++;
+  int flag = 0;
+  if(digitalRead(button_cont[0]) ==LOW && pressedNum<5) {
+    if(flag==0) {
+      flag = 1;
+      playerAnswer[pressedNum] = 'B';
+      Serial.println("blue button is pressed");
+      Serial.println(playerAnswer);
+      pressedNum++;
+    }else{   }
+  }else{
+    flag = 0;
+  }
 }
 void pressedYellow(){
-  playerAnswer[pressedNum] = 'Y';
-  Serial.println("yellow button is pressed");
-  Serial.println(playerAnswer);
-  //digitalWrite(pin_LED[1],HIGH);
-  pressedNum++;
+  int flag = 0;
+  if(digitalRead(button_cont[1]) ==LOW && pressedNum<5) {
+    if(flag==0) {
+      flag = 1;
+      playerAnswer[pressedNum] = 'Y';
+      Serial.println("yellow button is pressed");
+      Serial.println(playerAnswer);
+      pressedNum++;
+    }else{   }
+  }else{
+    flag = 0;
+  }
 }
 void pressedRed(){
-  playerAnswer[pressedNum] = 'R';
-  Serial.println("red button is pressed");
-  Serial.println(playerAnswer);
-  //digitalWrite(pin_LED[2],HIGH);
-  pressedNum++;
+  int flag = 0;
+  if(digitalRead(button_cont[2]) ==LOW && pressedNum<5) {
+    if(flag==0) {
+      flag = 1;
+      playerAnswer[pressedNum] = 'R';
+      Serial.println("red button is pressed");
+      Serial.println(playerAnswer);
+      pressedNum++;
+      flag = 0;
+    }else{   }
+  }else{
+    flag = 0;
+  }
 }
+
 void checkAnswer(){
   int wrong = 0;
   for(int i=0; i<5; i++){
