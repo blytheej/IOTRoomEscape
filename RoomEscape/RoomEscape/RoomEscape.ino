@@ -28,8 +28,7 @@ WiFiEspServer server(80);
 #define SS_PIN          53         
 //MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
-//STEP 2 - QUIZ 1. RFID
-//for RFID  49 50 51 52 53
+//STEP 2 - QUIZ 1. 타이머
 
 //STEP 3 - QUIZ 2. MORSE
 #define touchPinL 2
@@ -49,8 +48,8 @@ int butwait = 500;  //버튼이 눌러지기 전까지 대기하는 시간
 int ledtime =500;   //led 점등 시간
 int right = 0; //whether answer is correct or not
 int pressedNum = 0;
-char answer2[5] = { 'B' , 'Y', 'R', 'B', 'Y'};
-char playerAnswer[5];
+char answer2[6] = { 'B' , 'Y', 'R', 'B', 'Y'};
+char playerAnswer[6]="     ";
 
 //STEP 5 - ESCAPED
 
@@ -86,7 +85,7 @@ void setup() {
   //STEP 1 - START
   pinMode(elecMagnet, OUTPUT);
 
-  //STEP 2 - 
+  //STEP 2 - 타이머
   
   //STEP 3 - QUIZ 2. MORSE
    pinMode(touchPinL, INPUT);
@@ -338,49 +337,26 @@ int demonstrate(){   //문제 출제. answer에 따라 led 깜빡이기
 }
 //Interrupt 발생
 void pressedBlue(){
-  int flag = 0;
-  if(digitalRead(button_cont[0]) ==LOW && pressedNum<5) {
-    if(flag==0) {
-      flag = 1;
-      playerAnswer[pressedNum] = 'B';
-      Serial.println("blue button is pressed");
-      Serial.println(playerAnswer);
-      pressedNum++;
-    }else{   }
-  }else{
-    flag = 0;
-  }
+  playerAnswer[pressedNum] = 'B';
+  Serial.println("blue button is pressed");
+  Serial.println(playerAnswer);
+  //digitalWrite(pin_LED[0],HIGH);
+  pressedNum++;
 }
 void pressedYellow(){
-  int flag = 0;
-  if(digitalRead(button_cont[1]) ==LOW && pressedNum<5) {
-    if(flag==0) {
-      flag = 1;
-      playerAnswer[pressedNum] = 'Y';
-      Serial.println("yellow button is pressed");
-      Serial.println(playerAnswer);
-      pressedNum++;
-    }else{   }
-  }else{
-    flag = 0;
-  }
+  playerAnswer[pressedNum] = 'Y';
+  Serial.println("yellow button is pressed");
+  Serial.println(playerAnswer);
+  //digitalWrite(pin_LED[1],HIGH);
+  pressedNum++;
 }
 void pressedRed(){
-  int flag = 0;
-  if(digitalRead(button_cont[2]) ==LOW && pressedNum<5) {
-    if(flag==0) {
-      flag = 1;
-      playerAnswer[pressedNum] = 'R';
-      Serial.println("red button is pressed");
-      Serial.println(playerAnswer);
-      pressedNum++;
-      flag = 0;
-    }else{   }
-  }else{
-    flag = 0;
-  }
+  playerAnswer[pressedNum] = 'R';
+  Serial.println("red button is pressed");
+  Serial.println(playerAnswer);
+  //digitalWrite(pin_LED[2],HIGH);
+  pressedNum++;
 }
-
 void checkAnswer(){
   int wrong = 0;
   for(int i=0; i<5; i++){
