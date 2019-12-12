@@ -18,7 +18,7 @@ SoftwareSerial Serial3(wifiRX, wifiTX);
 #define quiz2Led 42
 #define quiz3Led 43 // LED for quiz
 
-int step = 4; // for step of game
+int step = 0; // for step of game
 char ssid[] = "Te";            // WIFI SSID
 char pass[] = "25672567";        // WIFI PASSWORD
 int status = WL_IDLE_STATUS; 
@@ -59,14 +59,14 @@ void setup() {
   //STEP 0
   Serial.begin(115200);
   Serial3.begin(115200);
-  //WiFi.init(&Serial3);
+  WiFi.init(&Serial3);
   pinMode(buzzer, OUTPUT);  
   pinMode(start_btn, INPUT);
   pinMode(quiz1Led, OUTPUT);
   pinMode(quiz2Led, OUTPUT);
   pinMode(quiz3Led, OUTPUT); 
   
- /*
+ 
   if (WiFi.status() == WL_NO_SHIELD) {  // check for the presence of the shield
     Serial.println("WiFi shield not present");
     // don't continue
@@ -80,7 +80,7 @@ void setup() {
   Serial.println("You're connected to the network");
     printWifiStatus();
   server.begin();// start the web server on port 80
-  */
+  
   
   //STEP 1 - START
   pinMode(elecMagnet, OUTPUT);
@@ -108,63 +108,61 @@ void setup() {
 
 void loop() {
   if(step == 0){
-    int start = digitalRead(start_btn);
-    if(start == 0){
-      init_step1(); // start step 1;
-    }    
-  }
-  if(step == 1){ // STEP 1. start setting
     //wifi
-    // listen for incoming clients
-  WiFiEspClient client = server.available();
-  if (client) {
-    Serial.println("New client");
-    // an http request ends with a blank line
-    boolean currentLineIsBlank = true;
-    while (client.connected()) {
-      if (client.available()) {
-        char c = client.read();
-        Serial.write(c);
-        // if you've gotten to the end of the line (received a newline
-        // character) and the line is blank, the http request has ended,
-        // so you can send a reply
-        if (c == '\n' && currentLineIsBlank) {
-          Serial.println("Sending response");
-          
-          // send a standard http response header
-          // use \r\n instead of many println statements to speedup data send
-          client.print(
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/html\r\n"
-            "Connection: close\r\n"  // the connection will be closed after completion of the response
-            "Refresh: 20\r\n"        // refresh the page automatically every 20 sec
-            "\r\n");
-          client.print("<!DOCTYPE html><head><meta charset=\"utf-8\"></head><body style=\"text-align:center;background: black;color:white; font-size:60px;padding:300px 0;\"> <div style=\"font-weight: bold;\"><div> 문이 닫힙니다</div><div style=\"color:red\">      문제를 풀고 방을 탈출하세요.    </div>    <div >       주어진 시간 10분    </div>  </div> </body></html>");
-          break;
-        }
-        if (c == '\n') {
-          // you're starting a new line
-          currentLineIsBlank = true;
-        }
-        else if (c != '\r') {
-          // you've gotten a character on the current line
-          currentLineIsBlank = false;
+    WiFiEspClient client = server.available();
+    if (client) {
+      Serial.println("New client");
+      // an http request ends with a blank line
+      boolean currentLineIsBlank = true;
+      while (client.connected()) {
+        if (client.available()) {
+          char c = client.read();
+          Serial.write(c);
+          // if you've gotten to the end of the line (received a newline
+          // character) and the line is blank, the http request has ended,
+          // so you can send a reply
+          if (c == '\n' && currentLineIsBlank) {
+            Serial.println("Sending response");
+            
+            // send a standard http response header
+            // use \r\n instead of many println statements to speedup data send
+            client.print(
+              "HTTP/1.1 200 OK\r\n"
+              "Content-Type: text/html\r\n"
+              "Connection: close\r\n"  // the connection will be closed after completion of the response
+              "Refresh: 20\r\n"        // refresh the page automatically every 20 sec
+              "\r\n");
+            client.print("<!DOCTYPE html><head><meta charset=\"utf-8\"></head><body style=\"text-align:center;background: black;color:white; font-size:60px;padding:300px 0;\"> <div style=\"font-weight: bold;\"><div> 문이 닫힙니다</div><div style=\"color:red\">      문제를 풀고 방을 탈출하세요.    </div>    <div >       주어진 시간 10분    </div>  </div> </body></html>");
+            break;
+          }
+          if (c == '\n') {
+            // you're starting a new line
+            currentLineIsBlank = true;
+          }
+          else if (c != '\r') {
+            // you've gotten a character on the current line
+            currentLineIsBlank = false;
+          }
         }
       }
+      // give the web browser time to receive the data
+      delay(1000);
+  
+      // close the connection:
+      client.stop();
+      Serial.println("Client disconnected");
+      init_step1();
     }
-    // give the web browser time to receive the data
-    delay(1000);
-
-    // close the connection:
-    client.stop();
-    Serial.println("Client disconnected");
   }
-    
+  if(step == 1){ // STEP 1. start setting
+     int start = digitalRead(start_btn);
+    if(start == 0){
+      init_step2(); // start step 1;
+    } 
     
   }
-  else if(step == 2){// STEP 2 
-    //get rfid tag read
-    
+  else if(step == 2){// STEP 2 - timer
+  
   }
   else if(step == 3){// STEP 3
     if(touchedTime>0){ // write touching record in lcd
@@ -253,6 +251,7 @@ void init_step3(){ // INITIALIZE STEP 3
   lcd.backlight();
   lcd.setCursor(0,0); //Start on line 0
   lcd.print("Question1. Morse"); 
+  step=3;
 }
 
 
