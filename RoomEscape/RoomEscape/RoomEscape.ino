@@ -11,26 +11,19 @@
 #include "SoftwareSerial.h"
 SoftwareSerial Serial3(wifiRX, wifiTX);
 #endif
-#define start_btn 31
-#define buzzer 32 //BUZZER
-#define elecMagnet 33
-#define quiz1Led 41
-#define quiz2Led 42
-#define quiz3Led 43 // LED for quiz
+
 
 int step = 0; // for step of game
 char ssid[] = "Te";            // WIFI SSID
 char pass[] = "25672567";        // WIFI PASSWORD
 int status = WL_IDLE_STATUS; 
 WiFiEspServer server(80);
-//STEP 1 - START
-#define RST_PIN         5           
-#define SS_PIN          53         
-//MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
+//STEP 1 - START       
+#define start_btn 31
+#define buzzer 32 //BUZZER
+#define elecMagnet 33
 
-//STEP 2 - QUIZ 1. 타이머
-
-//STEP 3 - QUIZ 2. MORSE
+//STEP 2 - QUIZ 2. MORSE
 #define touchPinL 2
 #define touchPinS 3
 int touchValL; // for long note
@@ -41,7 +34,7 @@ char touching[11];                   // touching status
 int ans_len = 10;
 int touchedTime = 0;                 // touched time to check answer
 
-//STEP 4 - QUIZ 3. Memory Game
+//STEP 3 - QUIZ 3. Memory Game
 int button_cont[3] = {2, 3, 18};  // Blue Yellow Red buttons
 int pin_LED[3] = {44, 45, 46};     // for Blue Yellow Red LED
 int butwait = 500;  //버튼이 눌러지기 전까지 대기하는 시간
@@ -51,7 +44,9 @@ int pressedNum = 0;
 char answer2[6] = { 'B' , 'Y', 'R', 'B', 'Y'};
 char playerAnswer[6]="     ";
 
-//STEP 5 - ESCAPED
+//STEP 4 - ESCAPED
+#define escapedLed1 42
+#define escapedLed2 42
 
 
 void setup() {
@@ -61,12 +56,10 @@ void setup() {
   Serial3.begin(115200);
   WiFi.init(&Serial3);
   pinMode(buzzer, OUTPUT);  
-  pinMode(start_btn, INPUT);
-  pinMode(quiz1Led, OUTPUT);
-  pinMode(quiz2Led, OUTPUT);
-  pinMode(quiz3Led, OUTPUT); 
+  pinMode(start_btn, INPUT);  
+  pinMode(elecMagnet, OUTPUT);
   
- 
+  //STEP 1 - START
   if (WiFi.status() == WL_NO_SHIELD) {  // check for the presence of the shield
     Serial.println("WiFi shield not present");
     // don't continue
@@ -81,34 +74,33 @@ void setup() {
     printWifiStatus();
   server.begin();// start the web server on port 80
   
-  
-  //STEP 1 - START
-  pinMode(elecMagnet, OUTPUT);
-
-  //STEP 2 - 타이머
-  
-  //STEP 3 - QUIZ 2. MORSE
+  //STEP 2 - QUIZ 1. MORSE
    pinMode(touchPinL, INPUT);
    pinMode(touchPinS, INPUT);
    //touch sensor interrupt
-   //attachInterrupt(digitalPinToInterrupt(touchPinL), touchedL, FALLING);
-   //attachInterrupt(digitalPinToInterrupt(touchPinS), touchedS, FALLING);
+   attachInterrupt(digitalPinToInterrupt(touchPinL), touched2, FALLING);
+   attachInterrupt(digitalPinToInterrupt(touchPinS), touchedS, FALLING);
    
 
-  //STEP 4 - QUIZ 3. Memory Game
+  //STEP 4 - QUIZ 2. Memory Game
   init_step4();
   //버튼이 눌리면 인터럽트 발생!
   pinMode(button_cont[0], INPUT);
   pinMode(button_cont[1], INPUT);
   pinMode(button_cont[2], INPUT);
-  attachInterrupt(digitalPinToInterrupt(button_cont[0]),pressedBlue, FALLING);
   attachInterrupt(digitalPinToInterrupt(button_cont[1]),pressedYellow, FALLING);
   attachInterrupt(digitalPinToInterrupt(button_cont[2]),pressedRed, FALLING);
 }
 
 void loop() {
   if(step == 0){
-    //wifi
+    int start = digitalRead(start_btn);
+    if(start == 0){
+      init_step1(); // start step 1;
+    }  
+  }
+  if(step == 1){ // STEP 1. wIFI
+     //wifi
     WiFiEspClient client = server.available();
     if (client) {
       Serial.println("New client");
@@ -147,24 +139,14 @@ void loop() {
       }
       // give the web browser time to receive the data
       delay(1000);
-  
       // close the connection:
       client.stop();
       Serial.println("Client disconnected");
-      init_step1();
-    }
-  }
-  if(step == 1){ // STEP 1. start setting
-     int start = digitalRead(start_btn);
-    if(start == 0){
-      init_step2(); // start step 1;
-    } 
+      init_step2();
+    }  
     
   }
-  else if(step == 2){// STEP 2 - timer
-  
-  }
-  else if(step == 3){// STEP 3
+  else if(step == 2){// STEP 2
     if(touchedTime>0){ // write touching record in lcd
     lcd.setCursor(0,1);
     lcd.print(touching);
@@ -174,7 +156,7 @@ void loop() {
       touchedTime =0;
     }
   }
-  else if(step == 4){// STEP 4
+  else if(step == 3){// STEP 3
     if(pressedNum == 0){
       lcd.setCursor(0,0);
       lcd.print("now press the");
@@ -193,7 +175,7 @@ void loop() {
       checkAnswer();
       pressedNum  = 0;
     }
-  }else if(step == 5){// STEP 5
+  }else if(step == 4){// STEP 5
     
   }else{
     
@@ -204,6 +186,7 @@ void loop() {
 
 void failed(){ //alert BUZZER, if available, time decrease
   digitalWrite(buzzer, HIGH);
+  delay(2000);
   digitalWrite(buzzer, LOW);
   
 }
@@ -229,36 +212,33 @@ void printWifiStatus()
 void init_step1(){
   Serial.println("\nSTEP 1");
   digitalWrite(elecMagnet, HIGH);
-  step=1;
-  //timer start
-  
-  
+  step=1;  
 }
 /***************** STEP 2 ***********************/
 
 void init_step2(){
   Serial.println("\nSTEP 2");
-  step=2;
-  
-}
-/***************** STEP 3 ***********************/
-
-void init_step3(){ // INITIALIZE STEP 3
-  Serial.println("\nSTEP 3");
-  digitalWrite(quiz1Led, HIGH);//lit led 1
   lcd.init();    
   // Print a message to the LCD.
   lcd.backlight();
   lcd.setCursor(0,0); //Start on line 0
   lcd.print("Question1. Morse"); 
-  step=3;
+  step=2;
 }
 
-
-void touchedL(){
+void touched2(){
+  if(step ==2 ){
   touching[touchedTime] = '-';
   touchedTime++;
   Serial.print('-');
+  }
+  else if(step == 3){
+   playerAnswer[pressedNum] = 'B';
+  Serial.println("blue button is pressed");
+  Serial.println(playerAnswer);
+  //digitalWrite(pin_LED[0],HIGH);
+  pressedNum++;
+  }
 }
 
 void touchedS(){
@@ -286,14 +266,13 @@ void checkMorse(){ // check the answer
       lcd.print("NEXT STAGE"); 
       Serial.println("\nANS : IOTRE");
       Serial.println("NEXT STAGE");
-      init_step4(); // go to next step -> 4
+      init_step3(); // go to next step -> 3
     }
 }
-/***************** STEP 4 ***********************/
-void init_step4(){
-   Serial.println("\nSTEP 4");
+/***************** STEP 3 ***********************/
+void init_step3(){
+   Serial.println("\nSTEP 3");
    step=4;
-   digitalWrite(quiz2Led, HIGH);//lit led 1
    //////////
    lcd.init();    
    lcd.backlight();
@@ -335,13 +314,6 @@ int demonstrate(){   //문제 출제. answer에 따라 led 깜빡이기
   }
 }
 //Interrupt 발생
-void pressedBlue(){
-  playerAnswer[pressedNum] = 'B';
-  Serial.println("blue button is pressed");
-  Serial.println(playerAnswer);
-  //digitalWrite(pin_LED[0],HIGH);
-  pressedNum++;
-}
 void pressedYellow(){
   playerAnswer[pressedNum] = 'Y';
   Serial.println("yellow button is pressed");
@@ -372,14 +344,15 @@ void checkAnswer(){
   }else {
     lcd.setCursor(0,1);
     lcd.print("NEXT STAGE");
+    init_step4();
   }
 }
-/***************** STEP 5 ***********************/
-void init_step5(){
-   Serial.println("\nSTEP 5");
-   digitalWrite(quiz3Led, HIGH);//lit led 1
+/***************** STEP 4 ***********************/
+void init_step4(){
+   Serial.println("\nSTEP 5 : Escaped");
    digitalWrite(elecMagnet, LOW); // turn of magnet
-   //타이머 멈춤 
+   digitalWrite(escapedLed1, HIGH);
+   digitalWrite(escapedLed2, HIGH);
    lcd.setCursor(0,0);
    lcd.print("SUCCESS!");
    lcd.setCursor(0,1);
