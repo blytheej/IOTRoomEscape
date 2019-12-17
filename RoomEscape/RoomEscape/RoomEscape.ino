@@ -11,9 +11,7 @@
 #include "SoftwareSerial.h"
 SoftwareSerial Serial3(wifiRX, wifiTX);
 #endif
-
-
-int step = 0; // for step of game
+int gstep;
 char ssid[] = "Te";            // WIFI SSID
 char pass[] = "25672567";        // WIFI PASSWORD
 int status = WL_IDLE_STATUS; 
@@ -50,7 +48,7 @@ char playerAnswer[6]="     ";
 
 
 void setup() {
-
+  gstep = 0; // for step of game
   //STEP 0
   Serial.begin(115200);
   Serial3.begin(115200);
@@ -84,7 +82,7 @@ void setup() {
    pinMode(touchPinL, INPUT);
    pinMode(touchPinS, INPUT);
    //touch sensor interrupt
-   //attachInterrupt(digitalPinToInterrupt(touchPinL), touched2, FALLING);
+   attachInterrupt(digitalPinToInterrupt(touchPinL), touched2, FALLING);
    //attachInterrupt(digitalPinToInterrupt(touchPinS), touchedS, FALLING);
    
 
@@ -98,21 +96,17 @@ void setup() {
 }
 
 void loop() {
-  if(step == 0){
+  Serial.println(gstep);
+  if(gstep == 0){
       digitalWrite(escapedLed1, HIGH);
       digitalWrite(escapedLed2, LOW);
       delay(1000);
       digitalWrite(escapedLed1, LOW);
       digitalWrite(escapedLed2, HIGH);
       delay(1000);
-    
-    int start = digitalRead(start_btn);
-    Serial.println(start);
-    if(start != 1){
-      init_step1(); // start step 1;
-    }  
+     
   }
-  if(step == 1){ // STEP 1. wIFI
+  if(gstep == 1){ // STEP 1. wIFI
      //wifi
     WiFiEspClient client = server.available();
     if (client) {
@@ -159,7 +153,7 @@ void loop() {
     }  
     
   }
-  else if(step == 2){// STEP 2
+  else if(gstep == 2){// STEP 2
     if(touchedTime>0){ // write touching record in lcd
     lcd.setCursor(0,1);
     lcd.print(touching);
@@ -169,7 +163,7 @@ void loop() {
       touchedTime =0;
     }
   }
-  else if(step == 3){// STEP 3
+  else if(gstep == 3){// STEP 3
     if(pressedNum == 0){
       lcd.setCursor(0,0);
       lcd.print("now press the");
@@ -188,7 +182,7 @@ void loop() {
       checkAnswer();
       pressedNum  = 0;
     }
-  }else if(step == 4){// STEP 5
+  }else if(gstep == 4){// STEP 5
     
   }else{
     
@@ -225,7 +219,7 @@ void printWifiStatus()
 void init_step1(){
   Serial.println("\nSTEP 1");
   digitalWrite(elecMagnet, HIGH);
-  step=1;  
+  gstep=1;  
 }
 /***************** STEP 2 ***********************/
 
@@ -236,16 +230,20 @@ void init_step2(){
   lcd.backlight();
   lcd.setCursor(0,0); //Start on line 0
   lcd.print("Question1. Morse"); 
-  step=2;
+  gstep=2;
 }
 
 void touched2(){
-  if(step ==2 ){
+  if(gstep == 0){
+    Serial.println("start");
+    init_step1();
+  }
+  if(gstep ==2 ){
   touching[touchedTime] = '-';
   touchedTime++;
   Serial.print('-');
   }
-  else if(step == 3){
+  else if(gstep == 3){
    playerAnswer[pressedNum] = 'B';
   Serial.println("blue button is pressed");
   Serial.println(playerAnswer);
@@ -285,7 +283,7 @@ void checkMorse(){ // check the answer
 /***************** STEP 3 ***********************/
 void init_step3(){
    Serial.println("\nSTEP 3");
-   step=4;
+   gstep=4;
    //////////
    lcd.init();    
    lcd.backlight();
@@ -362,7 +360,7 @@ void checkAnswer(){
 }
 /***************** STEP 4 ***********************/
 void init_step4(){
-   step=4;
+   gstep=4;
    Serial.println("\nSTEP 4 : Escaped");
    digitalWrite(elecMagnet, LOW); // turn of magnet
    digitalWrite(escapedLed1, HIGH);
