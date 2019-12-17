@@ -46,7 +46,7 @@ char playerAnswer[6]="     ";
 
 //STEP 4 - ESCAPED
 #define escapedLed1 42
-#define escapedLed2 42
+#define escapedLed2 43
 
 
 void setup() {
@@ -54,12 +54,17 @@ void setup() {
   //STEP 0
   Serial.begin(115200);
   Serial3.begin(115200);
-  WiFi.init(&Serial3);
+  
   pinMode(buzzer, OUTPUT);  
   pinMode(start_btn, INPUT);  
   pinMode(elecMagnet, OUTPUT);
+  pinMode(escapedLed1, OUTPUT);
+  pinMode(escapedLed2, OUTPUT);
   
   //STEP 1 - START
+  /*
+  WiFi.init(&Serial3);
+  
   if (WiFi.status() == WL_NO_SHIELD) {  // check for the presence of the shield
     Serial.println("WiFi shield not present");
     // don't continue
@@ -73,29 +78,37 @@ void setup() {
   Serial.println("You're connected to the network");
     printWifiStatus();
   server.begin();// start the web server on port 80
+  */
   
   //STEP 2 - QUIZ 1. MORSE
    pinMode(touchPinL, INPUT);
    pinMode(touchPinS, INPUT);
    //touch sensor interrupt
-   attachInterrupt(digitalPinToInterrupt(touchPinL), touched2, FALLING);
-   attachInterrupt(digitalPinToInterrupt(touchPinS), touchedS, FALLING);
+   //attachInterrupt(digitalPinToInterrupt(touchPinL), touched2, FALLING);
+   //attachInterrupt(digitalPinToInterrupt(touchPinS), touchedS, FALLING);
    
 
   //STEP 4 - QUIZ 2. Memory Game
-  init_step4();
   //버튼이 눌리면 인터럽트 발생!
   pinMode(button_cont[0], INPUT);
   pinMode(button_cont[1], INPUT);
   pinMode(button_cont[2], INPUT);
-  attachInterrupt(digitalPinToInterrupt(button_cont[1]),pressedYellow, FALLING);
-  attachInterrupt(digitalPinToInterrupt(button_cont[2]),pressedRed, FALLING);
+  //attachInterrupt(digitalPinToInterrupt(button_cont[1]),pressedYellow, FALLING);
+  //attachInterrupt(digitalPinToInterrupt(button_cont[2]),pressedRed, FALLING);
 }
 
 void loop() {
   if(step == 0){
+      digitalWrite(escapedLed1, HIGH);
+      digitalWrite(escapedLed2, LOW);
+      delay(1000);
+      digitalWrite(escapedLed1, LOW);
+      digitalWrite(escapedLed2, HIGH);
+      delay(1000);
+    
     int start = digitalRead(start_btn);
-    if(start == 0){
+    Serial.println(start);
+    if(start != 1){
       init_step1(); // start step 1;
     }  
   }
@@ -349,7 +362,8 @@ void checkAnswer(){
 }
 /***************** STEP 4 ***********************/
 void init_step4(){
-   Serial.println("\nSTEP 5 : Escaped");
+   step=4;
+   Serial.println("\nSTEP 4 : Escaped");
    digitalWrite(elecMagnet, LOW); // turn of magnet
    digitalWrite(escapedLed1, HIGH);
    digitalWrite(escapedLed2, HIGH);
